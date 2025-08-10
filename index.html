@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>端点EndPoint的个人网站</title>
+    <title>EndPoint的个人网站</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     
@@ -37,11 +37,11 @@
             .text-shadow {
                 text-shadow: 0 2px 4px rgba(0,0,0,0.1);
             }
-            .text-shadow-lg {
-                text-shadow: 0 4px 8px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);
-            }
             .bg-blur {
                 backdrop-filter: blur(8px);
+            }
+            .hover-scale {
+                transform: scale(1.02);
             }
         }
         
@@ -50,6 +50,9 @@
         
         body {
             transition: background-image 1s ease-in-out;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
         }
         
         .editable:hover {
@@ -61,16 +64,30 @@
             background-color: rgba(255, 255, 255, 0.9);
         }
         
-        .btn-float {
+        .upload-overlay {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .upload-container:hover .upload-overlay {
+            opacity: 1;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .download-btn {
             transition: all 0.3s ease;
         }
         
-        .btn-float:hover {
-            transform: translateY(-5px);
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
         }
     </style>
 </head>
-<body class="bg-cover bg-center bg-fixed min-h-screen font-sans text-dark" style="background-image: url('https://picsum.photos/id/1058/1920/1080');">
+<body class="min-h-screen font-sans text-dark" style="background-image: url('https://picsum.photos/id/1058/1920/1080');">
     <!-- 顶部导航 -->
     <nav class="fixed top-0 left-0 right-0 z-50 bg-dark/70 bg-blur text-white transition-all duration-300">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
@@ -84,6 +101,10 @@
                     <i class="fa fa-save" aria-hidden="true"></i>
                     <span class="hidden md:inline ml-1">保存</span>
                 </button>
+                <a href="#" id="downloadLink" class="p-2 rounded-full hover:bg-white/20 transition-colors" download="个人网站.html">
+                    <i class="fa fa-download" aria-hidden="true"></i>
+                    <span class="hidden md:inline ml-1">下载网站</span>
+                </a>
             </div>
         </div>
     </nav>
@@ -93,112 +114,125 @@
         <!-- 个人资料卡片 -->
         <div class="w-full max-w-3xl bg-white/80 bg-blur rounded-2xl shadow-xl overflow-hidden transform transition-all duration-500 hover:shadow-2xl">
             <!-- 背景图片区域 -->
-            <div class="relative h-48 md:h-64 bg-primary overflow-hidden">
+            <div class="relative h-48 md:h-64 overflow-hidden upload-container">
                 <img id="profileBg" src="https://picsum.photos/id/1039/1200/400" alt="个人背景图片" class="w-full h-full object-cover transition-transform duration-700 hover:scale-110">
-                <button id="changeBgBtn" class="absolute bottom-4 right-4 bg-white/80 hover:bg-white text-dark p-2 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 btn-float">
-                    <i class="fa fa-camera" aria-hidden="true"></i>
-                </button>
-                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 group"></div>
+                
+                <!-- 背景上传覆盖层 -->
+                <div id="bgUploadOverlay" class="upload-overlay absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <label for="bgUpload" class="text-white cursor-pointer text-center p-4">
+                        <i class="fa fa-upload text-3xl mb-2" aria-hidden="true"></i>
+                        <p>上传背景图片</p>
+                        <input type="file" id="bgUpload" accept="image/*">
+                    </label>
+                </div>
             </div>
             
             <!-- 个人信息区域 -->
             <div class="p-6 md:p-8 -mt-16 relative">
                 <!-- 头像 -->
-                <div class="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-lg mx-auto bg-primary overflow-hidden">
-                    <img src="https://picsum.photos/id/64/200/200" alt="个人头像" class="w-full h-full object-cover">
+                <div class="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-lg mx-auto overflow-hidden upload-container">
+                    <img id="avatar" src="https://picsum.photos/id/64/200/200" alt="个人头像" class="w-full h-full object-cover">
+                    
+                    <!-- 头像上传覆盖层 -->
+                    <div id="avatarUploadOverlay" class="upload-overlay absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                        <label for="avatarUpload" class="text-white cursor-pointer text-center">
+                            <i class="fa fa-camera text-2xl" aria-hidden="true"></i>
+                            <input type="file" id="avatarUpload" accept="image/*">
+                        </label>
+                    </div>
                 </div>
                 
                 <!-- 姓名 -->
                 <h2 id="userName" class="editable text-3xl md:text-4xl font-bold text-center mt-4 mb-2 outline-none min-h-[50px]" contenteditable="false">端点EndPoint</h2>
                 
                 <!-- 签名 -->
-                <p id="userSignature" class="editable text-xl md:text-2xl font-signature text-center text-accent mb-6 outline-none min-h-[30px]" contenteditable="false">热爱生活，追求卓越</p>
+                <p id="userSignature" class="editable text-xl md:text-2xl font-signature text-center text-accent mb-6 outline-none min-h-[30px]" contenteditable="false">这是我的签名</p>
                 
                 <!-- 自我介绍 -->
                 <div class="mt-6">
                     <h3 class="text-lg font-semibold mb-3 text-dark/80 border-b pb-2">关于我</h3>
-                    <p id="userBio" class="editable text-dark/80 leading-relaxed outline-none min-h-[100px]" contenteditable="false">
-                        哈喽，我是端点EndPoint，你可以叫我端点或者EndPoint。我是一名业余的独立游戏开发者。编程是我的爱好，创作也是我满足自己的一种途径。
-                        除了编程，我还喜欢音乐、游戏、科幻（末日向）和猫。这个网站是我的个人展示平台，很高兴能在这里与你相遇。
+                    <p id="userBio" class="editable text-dark/80 leading-relaxed outline-none min-h-[100px] whitespace-pre-line" contenteditable="false">
+                        大家好，欢迎来到我的个人网站。
+                        
+                        这里是我的自我介绍区域，你可以在编辑模式下修改这段文字，介绍你自己的兴趣爱好、职业经历、技能特长等等。
+                        
+                        希望通过这个网站能让更多人认识我、了解我。
                     </p>
                 </div>
                 
                 <!-- 社交媒体链接 -->
-                <div class="mt-8 flex justify-center space-x-4">
-                    <a href="#" class="text-dark/60 hover:text-primary transition-colors text-xl p-2">
+                <div class="mt-8 flex justify-center space-x-6">
+                    <a href="#" class="text-dark/60 hover:text-primary transition-colors text-xl p-2" title="微信">
                         <i class="fa fa-weixin" aria-hidden="true"></i>
                     </a>
-                    <a href="#" class="text-dark/60 hover:text-primary transition-colors text-xl p-2">
+                    <a href="#" class="text-dark/60 hover:text-primary transition-colors text-xl p-2" title="微博">
                         <i class="fa fa-weibo" aria-hidden="true"></i>
                     </a>
-                    <a href="#" class="text-dark/60 hover:text-primary transition-colors text-xl p-2">
+                    <a href="#" class="text-dark/60 hover:text-primary transition-colors text-xl p-2" title="GitHub">
                         <i class="fa fa-github" aria-hidden="true"></i>
                     </a>
-                    <a href="#" class="text-dark/60 hover:text-primary transition-colors text-xl p-2">
-                        <i class="fa fa-linkedin" aria-hidden="true"></i>
+                    <a href="#" class="text-dark/60 hover:text-primary transition-colors text-xl p-2" title="邮箱">
+                        <i class="fa fa-envelope" aria-hidden="true"></i>
                     </a>
                 </div>
             </div>
         </div>
         
-        <!-- 背景图片选择器 (默认隐藏) -->
-        <div id="bgSelector" class="w-full max-w-3xl mt-6 bg-white/90 bg-blur rounded-xl shadow-lg p-4 hidden">
-            <h3 class="text-lg font-semibold mb-4">选择背景图片</h3>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                <div class="bg-option cursor-pointer rounded-lg overflow-hidden h-24 border-2 border-transparent hover:border-primary transition-all" data-img="https://picsum.photos/id/1058/1920/1080">
-                    <img src="https://picsum.photos/id/1058/300/200" alt="自然风景" class="w-full h-full object-cover">
-                </div>
-                <div class="bg-option cursor-pointer rounded-lg overflow-hidden h-24 border-2 border-transparent hover:border-primary transition-all" data-img="https://picsum.photos/id/1015/1920/1080">
-                    <img src="https://picsum.photos/id/1015/300/200" alt="山脉风景" class="w-full h-full object-cover">
-                </div>
-                <div class="bg-option cursor-pointer rounded-lg overflow-hidden h-24 border-2 border-transparent hover:border-primary transition-all" data-img="https://picsum.photos/id/1019/1920/1080">
-                    <img src="https://picsum.photos/id/1019/300/200" alt="湖泊风景" class="w-full h-full object-cover">
-                </div>
-                <div class="bg-option cursor-pointer rounded-lg overflow-hidden h-24 border-2 border-transparent hover:border-primary transition-all" data-img="https://picsum.photos/id/1039/1920/1080">
-                    <img src="https://picsum.photos/id/1039/300/200" alt="森林风景" class="w-full h-full object-cover">
-                </div>
-                <div class="bg-option cursor-pointer rounded-lg overflow-hidden h-24 border-2 border-transparent hover:border-primary transition-all" data-img="https://picsum.photos/id/1048/1920/1080">
-                    <img src="https://picsum.photos/id/1048/300/200" alt="海滩风景" class="w-full h-full object-cover">
-                </div>
-                <div class="bg-option cursor-pointer rounded-lg overflow-hidden h-24 border-2 border-transparent hover:border-primary transition-all" data-img="https://picsum.photos/id/1061/1920/1080">
-                    <img src="https://picsum.photos/id/1061/300/200" alt="城市风景" class="w-full h-full object-cover">
-                </div>
-                <div class="bg-option cursor-pointer rounded-lg overflow-hidden h-24 border-2 border-transparent hover:border-primary transition-all" data-img="https://picsum.photos/id/1071/1920/1080">
-                    <img src="https://picsum.photos/id/1071/300/200" alt="沙漠风景" class="w-full h-full object-cover">
-                </div>
-                <div class="bg-option cursor-pointer rounded-lg overflow-hidden h-24 border-2 border-transparent hover:border-primary transition-all" data-img="https://picsum.photos/id/1082/1920/1080">
-                    <img src="https://picsum.photos/id/1082/300/200" alt="建筑风景" class="w-full h-full object-cover">
-                </div>
-            </div>
-            <div class="mt-4 flex justify-end">
-                <button id="closeBgSelector" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors">
-                    关闭
-                </button>
-            </div>
+        <!-- 操作指南卡片 -->
+        <div class="w-full max-w-3xl mt-6 bg-white/90 bg-blur rounded-xl shadow-lg p-4">
+            <h3 class="text-lg font-semibold mb-3 flex items-center">
+                <i class="fa fa-info-circle text-primary mr-2" aria-hidden="true"></i>
+                网站使用指南
+            </h3>
+            <ul class="space-y-2 text-dark/80">
+                <li class="flex items-start">
+                    <i class="fa fa-pencil-square-o text-primary mt-1 mr-2" aria-hidden="true"></i>
+                    <span>点击顶部"编辑模式"按钮可修改姓名、签名和自我介绍</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fa fa-user-circle-o text-primary mt-1 mr-2" aria-hidden="true"></i>
+                    <span>点击头像区域可从本地上传更换个人头像</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fa fa-image text-primary mt-1 mr-2" aria-hidden="true"></i>
+                    <span>点击个人资料卡片上方的横幅区域可更换网站背景</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fa fa-download text-primary mt-1 mr-2" aria-hidden="true"></i>
+                    <span>点击顶部"下载网站"按钮可将整个网站保存到电脑</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fa fa-save text-primary mt-1 mr-2" aria-hidden="true"></i>
+                    <span>所有修改会自动保存，下次打开时自动恢复</span>
+                </li>
+            </ul>
         </div>
     </main>
 
     <!-- 页脚 -->
     <footer class="bg-dark/70 bg-blur text-white py-4">
         <div class="container mx-auto px-4 text-center text-sm">
-            <p>© 2023 EndPoint的个人网站 | 设计与开发</p>
+            <p>© EndPoint 个人网站 | 点击顶部下载按钮保存到本地</p>
         </div>
     </footer>
 
-    <!-- 通知提示 (默认隐藏) -->
-    <div id="notification" class="fixed bottom-6 right-6 bg-dark text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center">
+    <!-- 通知提示 -->
+    <div id="notification" class="fixed bottom-6 right-6 bg-dark text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center z-50">
         <i class="fa fa-check-circle mr-2" aria-hidden="true"></i>
-        <span id="notificationText">保存成功！</span>
+        <span id="notificationText">操作成功！</span>
     </div>
 
     <script>
         // DOM 元素
         const editModeBtn = document.getElementById('editModeBtn');
         const saveBtn = document.getElementById('saveBtn');
-        const changeBgBtn = document.getElementById('changeBgBtn');
-        const bgSelector = document.getElementById('bgSelector');
-        const closeBgSelector = document.getElementById('closeBgSelector');
-        const bgOptions = document.querySelectorAll('.bg-option');
+        const downloadLink = document.getElementById('downloadLink');
+        const bgUpload = document.getElementById('bgUpload');
+        const avatarUpload = document.getElementById('avatarUpload');
+        const profileBg = document.getElementById('profileBg');
+        const avatar = document.getElementById('avatar');
+        const bgUploadOverlay = document.getElementById('bgUploadOverlay');
+        const avatarUploadOverlay = document.getElementById('avatarUploadOverlay');
         const notification = document.getElementById('notification');
         const notificationText = document.getElementById('notificationText');
         
@@ -209,9 +243,26 @@
             userBio: document.getElementById('userBio')
         };
         
-        // 编辑模式切换
+        // 编辑模式状态
         let editMode = false;
         
+        // 初始化设置下载链接
+        function setupDownloadLink() {
+            // 创建一个Blob对象包含当前HTML内容
+            const htmlContent = document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            
+            // 设置下载链接
+            downloadLink.href = url;
+            
+            // 点击下载按钮时显示通知
+            downloadLink.addEventListener('click', () => {
+                showNotification('网站已下载到您的电脑');
+            });
+        }
+        
+        // 编辑模式切换
         editModeBtn.addEventListener('click', () => {
             editMode = !editMode;
             
@@ -225,9 +276,9 @@
                 editModeBtn.innerHTML = '<i class="fa fa-times" aria-hidden="true"></i><span class="hidden md:inline ml-1">取消编辑</span>';
                 saveBtn.classList.remove('hidden');
                 
-                // 显示背景更换按钮
-                changeBgBtn.classList.remove('opacity-0');
-                changeBgBtn.classList.add('opacity-100');
+                // 显示上传覆盖层
+                bgUploadOverlay.style.display = 'flex';
+                avatarUploadOverlay.style.display = 'flex';
             } else {
                 // 退出编辑模式
                 Object.values(editableElements).forEach(el => {
@@ -238,30 +289,19 @@
                 editModeBtn.innerHTML = '<i class="fa fa-pencil" aria-hidden="true"></i><span class="hidden md:inline ml-1">编辑模式</span>';
                 saveBtn.classList.add('hidden');
                 
-                // 隐藏背景更换按钮
-                changeBgBtn.classList.remove('opacity-100');
-                changeBgBtn.classList.add('opacity-0');
-                
-                // 隐藏背景选择器
-                bgSelector.classList.add('hidden');
+                // 隐藏上传覆盖层
+                bgUploadOverlay.style.display = 'none';
+                avatarUploadOverlay.style.display = 'none';
             }
         });
         
         // 保存按钮点击事件
         saveBtn.addEventListener('click', () => {
-            // 保存数据到本地存储
-            const userData = {
-                userName: editableElements.userName.innerText,
-                userSignature: editableElements.userSignature.innerText,
-                userBio: editableElements.userBio.innerText,
-                backgroundImage: document.body.style.backgroundImage,
-                profileBgImage: document.getElementById('profileBg').src
-            };
+            saveUserData();
+            showNotification('所有内容已保存');
             
-            localStorage.setItem('userData', JSON.stringify(userData));
-            
-            // 显示通知
-            showNotification('保存成功！');
+            // 更新下载链接，包含最新内容
+            setupDownloadLink();
             
             // 退出编辑模式
             editMode = false;
@@ -272,48 +312,38 @@
             
             editModeBtn.innerHTML = '<i class="fa fa-pencil" aria-hidden="true"></i><span class="hidden md:inline ml-1">编辑模式</span>';
             saveBtn.classList.add('hidden');
-            
-            // 隐藏背景更换按钮
-            changeBgBtn.classList.remove('opacity-100');
-            changeBgBtn.classList.add('opacity-0');
-            
-            // 隐藏背景选择器
-            bgSelector.classList.add('hidden');
+            bgUploadOverlay.style.display = 'none';
+            avatarUploadOverlay.style.display = 'none';
         });
         
-        // 背景更换按钮点击事件
-        changeBgBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            bgSelector.classList.toggle('hidden');
-        });
-        
-        // 关闭背景选择器
-        closeBgSelector.addEventListener('click', () => {
-            bgSelector.classList.add('hidden');
-        });
-        
-        // 点击其他区域关闭背景选择器
-        document.addEventListener('click', (e) => {
-            if (!bgSelector.contains(e.target) && e.target !== changeBgBtn) {
-                bgSelector.classList.add('hidden');
+        // 上传背景图片
+        bgUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    document.body.style.backgroundImage = `url('${event.target.result}')`;
+                    saveUserData();
+                    showNotification('背景图片已更新');
+                    setupDownloadLink(); // 更新下载链接
+                };
+                reader.readAsDataURL(file);
             }
         });
         
-        // 选择背景图片
-        bgOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                const imgUrl = option.getAttribute('data-img');
-                document.body.style.backgroundImage = `url('${imgUrl}')`;
-                
-                // 高亮选中的背景
-                bgOptions.forEach(opt => opt.classList.remove('border-primary'));
-                option.classList.add('border-primary');
-                
-                // 3秒后自动关闭选择器
-                setTimeout(() => {
-                    bgSelector.classList.add('hidden');
-                }, 1000);
-            });
+        // 上传头像
+        avatarUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    avatar.src = event.target.result;
+                    saveUserData();
+                    showNotification('头像已更新');
+                    setupDownloadLink(); // 更新下载链接
+                };
+                reader.readAsDataURL(file);
+            }
         });
         
         // 显示通知
@@ -328,9 +358,23 @@
             }, 3000);
         }
         
-        // 页面加载时从本地存储读取数据
-        window.addEventListener('load', () => {
-            const savedData = localStorage.getItem('userData');
+        // 保存用户数据到本地存储
+        function saveUserData() {
+            const userData = {
+                userName: editableElements.userName.innerText,
+                userSignature: editableElements.userSignature.innerText,
+                userBio: editableElements.userBio.innerText,
+                backgroundImage: document.body.style.backgroundImage,
+                profileBgImage: profileBg.src,
+                avatarImage: avatar.src
+            };
+            
+            localStorage.setItem('personalWebsiteData', JSON.stringify(userData));
+        }
+        
+        // 从本地存储加载用户数据
+        function loadUserData() {
+            const savedData = localStorage.getItem('personalWebsiteData');
             if (savedData) {
                 const userData = JSON.parse(savedData);
                 
@@ -341,10 +385,27 @@
                 
                 // 恢复背景图片
                 document.body.style.backgroundImage = userData.backgroundImage;
-                document.getElementById('profileBg').src = userData.profileBgImage;
-                
-                showNotification('已加载保存的数据');
+                profileBg.src = userData.profileBgImage;
+                avatar.src = userData.avatarImage;
             }
+        }
+        
+        // 页面加载时初始化
+        window.addEventListener('load', () => {
+            // 初始隐藏上传覆盖层
+            bgUploadOverlay.style.display = 'none';
+            avatarUploadOverlay.style.display = 'none';
+            
+            // 加载保存的数据
+            loadUserData();
+            
+            // 设置下载链接
+            setupDownloadLink();
+            
+            // 显示欢迎通知
+            setTimeout(() => {
+                showNotification('欢迎来到您的个人网站');
+            }, 1000);
         });
         
         // 导航栏滚动效果
@@ -357,6 +418,17 @@
                 nav.classList.add('py-3', 'bg-dark/70');
                 nav.classList.remove('py-2', 'bg-dark/90');
             }
+        });
+        
+        // 编辑内容失去焦点时自动保存
+        Object.values(editableElements).forEach(el => {
+            el.addEventListener('blur', () => {
+                if (editMode) {
+                    saveUserData();
+                    showNotification('内容已自动保存');
+                    setupDownloadLink(); // 更新下载链接
+                }
+            });
         });
     </script>
 </body>
